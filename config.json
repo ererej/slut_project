@@ -1,0 +1,15 @@
+{
+    "db": { 
+		"database": "slut_project_dev",
+		"username": "root", 
+		"password": "",
+		"host": "localhost"
+	},
+	"productionDb": { 
+        "database": "slut_project_dev",
+		"username": "root", 
+		"password": "",
+		"host": "localhost"
+	},
+	"verySecretSecret": "IIIllliilllLLLi"
+}

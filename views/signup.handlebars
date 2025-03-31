@@ -1,0 +1,27 @@
+<h1 class="text-4xl font-bold text-center text-blue-600 mb-8">SIGN UP!!!!</h1>
+<form action="/user" method="post" enctype="multipart/form-data" class="max-w-md mx-auto bg-white p-6 rounded-lg shadow-md">
+    <div class="mb-4">
+        <label for="username" class="block text-gray-700 font-medium mb-2">Username:</label>
+        <input type="text" id="username" name="username" required="true" 
+               class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
+    </div>
+    <div class="mb-4">
+        <label for="password" class="block text-gray-700 font-medium mb-2">Password:</label>
+        <input type="password" id="password" name="password" required="true" 
+               class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
+    </div>
+    <div class="mb-4">
+        <label for="confirmPassword" class="block text-gray-700 font-medium mb-2">Confirm Password:</label>
+        <input type="password" id="confirmPassword" name="confirmPassword" required="true" 
+               class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
+    </div>
+    <div class="mb-4">
+        <label for="ProfilePic" class="block text-gray-700 font-medium mb-2">Profile Picture:</label>
+        <input type="file" id="ProfilePic" name="ProfilePic" required="true" 
+               class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
+    </div>
+    <button type="submit" 
+            class="w-full bg-blue-500 text-white py-2 px-4 rounded-lg hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-500">
+        Sign Up
+    </button>
+</form>

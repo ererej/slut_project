@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+</head>
+<body class="flex flex-col min-h-screen">
+    <header class="flex justify-between items-center p-4 bg-gradient-to-r from-purple-500 to-blue-500 text-white shadow-lg">
+        <h1 class="text-3xl font-bold"><a href="/tricks">The Circus Database</a></h1>
+        <nav>
+            <ul class="flex space-x-4">
+                <li><a href="/tricks" class="hover:underline">Tricks</a></li>
+                <li><a href="/create-trick" class="hover:und</header>erline">Create trick</a></li>
+                <li><a href="/friends" class="hover:und</header>erline">Friends</a></li>
+                <li><a href="/logout" class="hover:underline">logout</a></li>
+            </ul>
+        </nav>
+    </header>
+    <div class="p-4 min-h-screen">
+        {{#if error}}
+            <div class="flex justify-center m-5 items-center">
+                <div class="bg-red-500 text-white p-4 rounded-lg mb-4">{{error}}</div>
+            </div>
+        {{/if}}
+        {{#if success}}
+            <div class="bg-green-500 text-white p-4 rounded-lg mb-4 w-contain">
+                {{success}}
+            </div>
+        {{/if}}
+        {{{body}}}
+        
+    </div>
+    <footer class="p-4 bg-gradient-to-r from-purple-500 to-blue-500 text-white shadow-lg">
+        <p>&copy; 2025 The Circus Database</p>
+    </footer>
+</body>
+</html>

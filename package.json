@@ -1,0 +1,34 @@
+{
+  "name": "slut_project",
+  "version": "1.0.0",
+  "description": "A website for saving Circus tricks and or circus seris ",
+  "main": "server.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "start": "node server.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/ererej/slut_project.git"
+  },
+  "keywords": [
+    "Circus"
+  ],
+  "author": "Ererej",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/ererej/slut_project/issues"
+  },
+  "homepage": "https://github.com/ererej/slut_project#readme",
+  "dependencies": {
+    "bcrypt": "^5.1.1",
+    "connect-busboy": "^1.0.0",
+    "cookie-parser": "^1.4.7",
+    "express-handlebars": "^8.0.1",
+    "express.js": "^1.0.0",
+    "jsonwebtoken": "^9.0.2",
+    "mysql2": "^3.12.0",
+    "sequelize": "^6.37.5",
+    "sequelize-cli": "^6.6.2"
+  }
+}
