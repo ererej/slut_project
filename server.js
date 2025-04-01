@@ -356,9 +356,18 @@ app.delete('/deleteTrick/:trickId', async (req, res) => {
         }
     }
 
-    await db.Tricks.destroy({ where: { id: trickId } });
-    
-    res.status(200).send('Trick deleted successfully')
+    try {
+        // Delete dependent rows first
+        await db.Tricks.update({ to: null }, { where: { to: trickId } });
+
+        // Now delete the parent row
+        await db.Tricks.destroy({ where: { id: trickId } });
+
+        res.status(200).send({ message: 'Trick deleted successfully' });
+    } catch (error) {
+        console.error(error);
+        res.status(500).send({ error: 'Failed to delete trick' });
+    }
 })
 
 app.get('/create-Transition', async (req, res) => {

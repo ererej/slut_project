@@ -4,11 +4,15 @@
 		{{#if trick.images.length}}
 			<img id="mainImage" class="mt-4 rounded shadow-lg w-full max-w-screen-sm md:max-w-full max-h-96 object-contain" src="/uploadedImages/{{trick.images.[0]}}" alt="picture of the trick">
 			{{#if (greaterThan trick.images.length 1)}}
-				<select id="imageSelector" class="mt-4">
+				<div class="flex">
+					<p>Other images:</p>
 					{{#each trick.images}}
-						<option value="/uploadedImages/{{this}}">{{@index}}</option>
+					<button onclick="setImage('{{@index}}')" class="m-1">
+						<img class="mt-4 rounded shadow-lg w-fit max-w-screen-sm md:max-w-full max-h-20 object-contain" src="/uploadedImages/{{this}}" alt="picture of the trick">
+					</button>
+						
 					{{/each}}
-				</select>
+				</div>
 			{{/if}}
 		{{/if}}
 	</div>
@@ -72,12 +76,13 @@
 </div>
 
 <script>
-	if (document.getElementById('imageSelector')) {
-		document.getElementById('imageSelector').addEventListener('change', function() {
-			document.getElementById('mainImage').src = this.value;
-		});
-	}
-
+	const setImage = async(index) => {
+		const mainImage = document.getElementById('mainImage');
+		const images = '{{trick.images}}'.split(',');
+		mainImage.src = '/uploadedImages/' + images[index];
+		mainImage.alt = 'picture of the trick';
+	};
+	{{!-- window.setImage() = setImage(); --}}
 	const deleteTrick = async (trickid) => {
 		console.log(trickid)
 		if (!confirm('Are you sure you want to delete this trick?') == true) {

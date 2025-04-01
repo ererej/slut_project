@@ -85,13 +85,13 @@ module.exports = (sequelize, DataTypes) => {
             onDelete: 'SET NULL'
           },
         to: {
-        type: DataTypes.INTEGER,
-        references: {
-            model: 'tricks',
-            key: 'id'
-        },
-        onUpdate: 'CASCADE',
-        onDelete: 'SET NULL'
+            type: DataTypes.INTEGER,
+            references: {
+                model: 'tricks',
+                key: 'id'
+            },
+            onUpdate: 'CASCADE',
+            onDelete: 'SET NULL'
         },
     });
 
