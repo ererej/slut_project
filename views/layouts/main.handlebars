@@ -7,17 +7,179 @@
     <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
 </head>
 <body class="flex flex-col min-h-screen">
-    <header class="flex justify-between items-center p-4 bg-gradient-to-r from-purple-500 to-blue-500 text-white shadow-lg">
-        <h1 class="text-3xl font-bold"><a href="/tricks">The Circus Database</a></h1>
-        <nav>
-            <ul class="flex space-x-4">
+    <header class="fs-0 p-0 m-0 flex justify-between items-center p-4 bg-gradient-to-r from-purple-500 to-blue-500 text-white shadow-lg">
+        <div class="sm:hidden"></div>
+        <img src="/pictures/logo.svg" alt="Logo" class="h-20 -p-2 -my-2">
+        <h1 class="text-3xl font-bold hidden sm:block"><a href="/tricks">The Circus Database</a></h1>
+        <div class="flex flex-row">
+        <div class="w-fit">
+            <button id="menu-toggle" class="sm:hidden text-white focus:outline-none relative h-8 w-8 transform transition-all duration-500 ease-in-out overflow-visible">
+                
+                <span class="absolute h-1 w-6 bg-white rounded-lg transform transition-all duration-1000 ease-in-out" style="top: 30%; left: 10%"></span>
+                <span class="absolute h-1 w-6 bg-white rounded-lg transform transition-all duration-1000 ease-in-out" style="top: 50%; left: 10%"></span>
+                <span class="absolute h-1 w-6 bg-white rounded-lg transform transition-all duration-1000 ease-in-out" style="top: 70%; left: 10%"></span>
+            </button>
+        </div>
+        <nav id="menu" class="hidden sm:block transition-all duration-300 ease-in-out">
+            <ul class="flex flex-col sm:flex-row sm:space-x-4">
                 <li><a href="/tricks" class="hover:underline">Tricks</a></li>
-                <li><a href="/create-trick" class="hover:und</header>erline">Create trick</a></li>
-                <li><a href="/friends" class="hover:und</header>erline">Friends</a></li>
-                <li><a href="/logout" class="hover:underline">logout</a></li>
+                <li><a href="/create-trick" class="hover:underline">Create trick</a></li>
+                <li><a href="/friends" class="hover:underline">Friends</a></li>
+                <li><a href="/logout" class="hover:underline">Logout</a></li>
             </ul>
         </nav>
+        </div>
     </header>
+    <script>
+        const menuToggle = document.getElementById('menu-toggle');
+        const menu = document.getElementById('menu');
+        const spans = menuToggle.querySelectorAll('span');
+        const logo = document.querySelector('img[src="/pictures/logo.svg"]');
+        const header = document.querySelector('header');
+        
+
+        menuToggle.addEventListener('click', () => {
+            
+            const headerBox = header.getBoundingClientRect();
+            const headerHeight = headerBox.height; 
+
+            const menuToggleBox = menuToggle.getBoundingClientRect();
+            const menuTogglePosition = {x: menuToggleBox.x, y: menuToggleBox.y};
+
+            const menuBox = menu.getBoundingClientRect();
+            const menuPosition = {x: menuBox.x, y: menuBox.y};
+
+            
+            if (!menu.classList.contains('hidden')) { //for closing the menu
+
+                logo.animate([
+                    { transform: 'translateX(-55%) translateY(15%)' },
+                    { transform: 'translateX(0) translateY(0)' }
+                ], {
+                    duration: 500,
+                    easing: 'ease-in-out',
+                    fill: 'forwards'
+                });
+                menu.style.position = 'absolute';
+                menu.style.top = `${menuPosition.y}px`;
+                menu.style.left = `${menuPosition.x}px`;
+                console.log(menuPosition.x, menuPosition.y);
+                console.log(headerBox.x, headerBox.y);
+                menu.animate([
+                    { transform: 'translateX(0)' },
+                    { transform: `translateX(${headerBox.width - menuBox.x}px)` }
+                ], {
+                    duration: 500,
+                    easing: 'ease-in-out',
+                    fill: 'forwards'
+                }).onfinish = () => {
+                    menu.classList.add('hidden');
+                    menu.style.position = 'relative';
+                    menu.style.top = 'auto';
+                    menu.style.left = 'auto';
+                };
+                
+                
+            } else { //for opening the menu
+                menu.classList.toggle('hidden');
+                //animate the buttons 
+                menu.animate([
+                    { transform: 'translateX(100%)' },
+                    { transform: 'translateX(0)' }
+                ], {
+                    duration: 500,
+                    easing: 'ease-in-out',
+                    fill: 'forwards'
+                });
+                // animate the hamburger icon
+                
+            }
+            
+            menuToggle.style.position = 'absolute';
+            const newMenuToggleBox = menuToggle.getBoundingClientRect();
+            const newMenuTogglePosition = {x: newMenuToggleBox.x, y: newMenuToggleBox.y };
+            
+            console.log(menuTogglePosition.x, menuTogglePosition.y);
+            console.log(newMenuTogglePosition.x, newMenuTogglePosition.y);
+            menuToggle.animate([
+                { transform: `translateX(${menuTogglePosition.x - newMenuTogglePosition.x + menuToggleBox.width /2}px) translateY(${ menuTogglePosition.y - newMenuTogglePosition.y + menuToggleBox.width /2}px)` },
+                { transform: `translateX(0) translateY(0)` }
+            ], {
+                duration: 500,
+                easing: 'ease-in-out',
+                fill: 'forwards'
+            });
+            menuToggle.style.position = 'relative';
+
+            header.style.overflow = 'hidden';
+            if (menu.classList.contains('hidden')) { // Animate when menu closes
+                header.animate([
+                    { maxHeight: "10px" }, // Replace 500px with the maximum expected height
+                    { maxHeight: headerHeight + "px" }
+                ], {
+                    duration: 2000,
+                    easing: 'ease-in-out',
+                    fill: 'forwards'
+                }); 
+            } else { // Animate when menu opens
+                header.animate([
+                    { maxHeight: headerHeight + "px" },
+                    { maxHeight: "500px" } // Replace 500px with the maximum expected height
+                ], {
+                    duration: 2000,
+                    easing: 'ease-in-out',
+                    fill: 'forwards'
+                }); 
+            }
+
+            // animate the hamburger icon
+            if (menuToggle.classList.contains('menu-open')) {
+                spans[1].style.transition = 'opacity 0.5s ease-out';
+                menuToggle.classList.remove('menu-open');
+                // Reset to hamburger
+                spans[0].style.transform = 'translateY(0) rotate(0)';
+                spans[1].style.opacity = '1';
+                spans[2].style.transform = 'translateY(0) rotate(0)';
+                
+                // Remove classes after animation completes
+                setTimeout(() => {
+                    spans[0].classList.remove('rotate-45');
+                    spans[1].classList.remove('opacity-0');
+                    spans[2].classList.remove('-rotate-45');
+                }, 700);
+            } else {
+                menuToggle.classList.add('menu-open');
+
+                spans.forEach(span => {
+                    span.style.transition = 'transform 0.5s ease-in';
+                });
+                // Animate to X
+                // First span: move down and rotate 45 degrees
+                spans[0].style.transform = 'translateY(6px)'//' rotate(45deg)';
+                
+                // Last span: move up and rotate -45 degrees
+                spans[2].style.transform = 'translateY(-6px)' //rotate(-45deg)';
+                
+                setTimeout(() => {
+                    // Middle span: fade out
+                    spans[1].style.opacity = '0';
+                    spans.forEach(span => {
+                        span.style.transition = 'transform 0.7s ease-out';
+                    });
+                    spans[0].style.transform = 'translateY(6px) rotate(45deg)';
+                    spans[1].style.opacity = '0';
+                    spans[2].style.transform = 'translateY(-6px) rotate(-45deg)';
+                    // Add classes for state tracking
+                    spans[0].classList.add('rotate-45');
+                    spans[1].classList.add('opacity-0');
+                    spans[2].classList.add('-rotate-45');
+
+                }, 500);
+
+                }
+            
+        });
+    </script>
     <div class="p-4 min-h-screen">
         {{#if error}}
             <div class="flex justify-center m-5 items-center">

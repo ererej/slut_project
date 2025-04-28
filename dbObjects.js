@@ -16,13 +16,31 @@ const Users = require('./models/Users')(sequelize, Sequelize.DataTypes);
 
 
 
-const models = { Sequelize, Tricks, Users };
 
-Object.values(models).forEach((model) => {
+Object.values(sequelize.models).forEach((model) => {
     if (typeof model.associate === 'function') {
-        model.associate(models);
+        model.associate(sequelize.models);
     }
 });
+
+const models = { Sequelize, sequelize, Tricks, Users };
+
+Reflect.defineProperty(Tricks.prototype, "canView", {
+	value: async function(user) {
+		if (this.visibility === 'everyone' || this.owner === user) {
+			return true
+		}
+		if (this.visibility === 'friends') {
+			if (this.owner.findOne({where: {friendId: user.id}})) {
+				return true
+			}
+		}
+		return false
+	} 
+
+})
+
+
 
 /*
 const getRaw = (trick) => {

@@ -26,7 +26,10 @@
     <div class="mb-4">
         <label for="video" class="block text-gray-700 font-bold mb-2">Video</label>
         <input type="file" accept=".mp4, .webm, .ogg" id="video" name="video" class="w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
+        <div id="video-preview" class="mt-2 hidden">
+        </div>
     </div>
+    <input type="file" name="videoThumbnail" id="videoThumbnail" class="hidden">
     <div class="mb-4">
         <label for="from" class="block text-gray-700 font-bold mb-2">From (not required)</label>
         <select id="from" name="from" required="false" class="w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
@@ -48,3 +51,37 @@
         <button type="submit" class="px-4 py-2 bg-blue-500 text-white font-bold rounded-md hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-500">Submit</button>
     </div>
 </form>
+
+<script>
+    const videoThumbnailInput = document.getElementById('videoThumbnail');
+    const videoInput = document.getElementById('video');
+    const videoPreview = document.getElementById('video-preview');
+    videoInput.addEventListener('change', function() {
+        const file = this.files[0];
+        if (file) {
+            const url = URL.createObjectURL(file);
+            
+            videoPreview.innerHTML = `<canvas></canvas>`;
+            const canvas = videoPreview.querySelector('canvas');
+            const context = canvas.getContext('2d');
+            const video = document.createElement('video');
+            video.src = url;
+            video.addEventListener('loadeddata', function() {
+                canvas.width = video.videoWidth;
+                canvas.height = video.videoHeight;
+                context.drawImage(video, 0, 0, canvas.width, canvas.height);
+                
+                const thumbnailUrl = canvas.toDataURL('image/png');
+                videoThumbnailInput.setAttribute('src', thumbnailUrl);
+                videoThumbnailInput.value(thumbnailUrl);
+                videoPreview.innerHTML = `<img src="${thumbnailUrl}" alt="Video thumbnail" class="mt-4 rounded shadow-lg w-fit max-w-screen-sm md:max-w-full max-h-20 object-contain">`;
+            });
+
+            videoPreview.classList.remove('hidden');
+        } else {
+            videoPreview.classList.add('hidden');
+            videoPreview.innerHTML = '';
+            videoThumbnailInput.setAttribute('src', '');
+        }
+    });
+</script>

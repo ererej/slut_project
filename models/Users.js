@@ -1,5 +1,5 @@
 module.exports = (sequelize, DataTypes) => {
-    const User = sequelize.define('User', {
+    const User = sequelize.define('Users', {
       id: {
         type: DataTypes.INTEGER,
         primaryKey: true,
@@ -44,6 +44,5 @@ module.exports = (sequelize, DataTypes) => {
       foreignKey: 'userId',
       otherKey: 'friendId',
     });
-  
     return User;
   };

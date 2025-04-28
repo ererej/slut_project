@@ -5,6 +5,27 @@ module.exports = (sequelize, DataTypes) => {
             primaryKey: true,
             autoIncrement: true,
         },
+        owner: {
+            type: DataTypes.INTEGER,
+            references: {
+                model: 'users',
+                key: 'id'
+            },
+            onUpdate: 'CASCADE',
+            onDelete: 'SET NULL'
+        },
+        visibility: {
+            type: DataTypes.ENUM('everyone', 'friends', 'only_me'),
+            allowNull: false,
+            defaultValue: 'friends'
+        },
+        edit_perms: {
+            type: DataTypes.ENUM('public', 'friends', 'only_me'),
+            allowNull: false,
+            defaultValue: 'only_me'
+        },
+        
+
         name: {
             type: DataTypes.STRING,
             allowNull: false,
@@ -94,9 +115,17 @@ module.exports = (sequelize, DataTypes) => {
             onDelete: 'SET NULL'
         },
     });
-
-    Trick.belongsTo(Trick, { as: 'FromTrick', foreignKey: 'from' });
-    Trick.belongsTo(Trick, { as: 'ToTrick', foreignKey: 'to' });
+    Trick.associate = (models) => {
+        Trick.belongsTo(models.tricks, { as: 'FromTrick', foreignKey: 'from' });
+        Trick.belongsTo(models.tricks, { as: 'ToTrick', foreignKey: 'to' });
+        Trick.belongsTo(models.Users, { foreignKey: 'owner' });
+        Trick.belongsToMany(models.Users, {
+          through: 'tricks_granted_users',
+          foreignKey: 'trick_id',
+          otherKey: 'user_id',
+        });
+        Trick.hasMany(models.tricks_granted_users, { foreignKey: 'trick_id' });
+      };
 
     return Trick;
 
