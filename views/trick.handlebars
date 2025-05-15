@@ -153,12 +153,6 @@
 		if (!confirm('Are you sure you want to delete this trick?') == true) {
 			return;
 		}
-		const response = await fetch(`/deleteTrick/` + trickid, {
-			method: 'DELETE',
-		});
-
-		if (response.ok) {
-			window.location.href = '/tricks';
-		}
+		window.location.href = `/deleteTrick/` + trickid;
 	};
 </script>

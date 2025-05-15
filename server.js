@@ -38,6 +38,16 @@ app.use(cookieParser());
 app.use(methodOverride('_method', { methods: ['POST', 'GET'] }));
 
 app.use((req, res, next) => {
+    if (req.query && req.query.error) {
+        res.locals.error = req.query.error;
+    }
+    if (req.query && req.query.success) {
+        res.locals.success = req.query.success;
+    }
+    next();
+});
+
+app.use((req, res, next) => {
     // First check cookie
     if (req.cookies && req.cookies.token) {
         try {
@@ -177,7 +187,7 @@ app.get('/signup', (req, res) => {
 })
 
 app.get('/login', (req, res) => {
-    res.status(200).render('login', { error: req.query.error })
+    res.status(200).render('login', )
 })
 
 app.get('/logout', (req, res) => {
@@ -600,7 +610,8 @@ app.post('/addTrick', async (req, res) => {
     });
 });
 
-app.delete('/deleteTrick/:trickId', async (req, res) => {
+// was DELETE but em yes not anymore
+app.get('/deleteTrick/:trickId', async (req, res) => {
     //! make sure the user is permited to deleate the trick
 
     const trickId = req.params.trickId;
