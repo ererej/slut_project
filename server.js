@@ -7,11 +7,11 @@ const db = require('./dbObjects.js')
 const fs = require('fs-extra')
 const busboy = require('connect-busboy')
 const path = require('path')
-const { where } = require('sequelize')
 const bcrypt = require('bcrypt')
 const jsonWebToken = require('jsonwebtoken')
 const config = require('./config.json')
-const { exec } = require('child_process')
+const methodOverride = require('method-override');
+const { Op } = require('sequelize');
 
 
 app.use(express.static('public'))
@@ -34,6 +34,8 @@ app.use(express.urlencoded({
     extended: true
 }))
 app.use(cookieParser());
+
+app.use(methodOverride('_method', { methods: ['POST', 'GET'] }));
 
 app.use((req, res, next) => {
     // First check cookie
@@ -67,7 +69,7 @@ app.use((req, res, next) => {
     }
     
     // No valid authentication
-    if (!["/login", "/signup", "/checkLogin", "/pictures/logo.svg"].includes(req.path)) {
+    if (!["/login", "/signup", "/checkLogin", "/pictures/logo.svg", "/"].includes(req.path)) {
         console.log(`Unauthorized access to ${req.path}`);
         res.redirect('/login');
         return;
@@ -105,19 +107,32 @@ const getUserFromToken = async (req) => {
     return null;
 }
 
-const canView = async (user) => {
+// const canView = async (user) => {
 
-}
-
+// }
 
 app.get('/', (req, res) => {
-    res.redirect('/tricks')
-})
+    let documentation = `
+        <h1>Welcome to the API documentation.</h1><br>
+        Almost no routes return a JSON object, most of them render or redirect to a page.<br>
+        "/login", "/signup", "/checkLogin", "/pictures/logo.svg", "/" are the only routes that do not require authentication.<br>
+        <br>
+        POST /checkLogin - Check if the user is logged in. Returns 200 if already logged in and redirects to /tricks if the login was successful.<br>
+        GET /logout - Clears the authentication cookie and redirects to /login.<br>
+        GET /uploadedImages/:filename - Serves the requested image that a user has uploaded.<br>
+        GET /pictures/:filename - Serves the requested image.<br>
+        GET /uploadedVideos/:filename - Serves the requested video that a user has uploaded.<br>
+        GET /video-thumbnail/:filename - (DEPRECATED) Serves the requested video thumbnail of a user-uploaded video.<br>
+        POST /addTrick - Adds a trick to the database.<br>
+        DELETE /deleteTrick/:trickId - Deletes the trick with the given ID.<br>
+        PUT /updateTrick/:trickId - Updates the trick with the given ID.<br>
+    `;
+    res.status(200).send(`${documentation}`);
+});
 
 app.post('/checkLogin', async (req, res) => {
     if (req.headers['Authorization']) {
         try {
-            console.log(req.headers['Authorization'])
             const decoded = jsonWebToken.verify(req.headers['Authorization'].slice(7), config.verySecretSecret);
             if (decoded) {
                 res.status(200).send('User is already logged in');
@@ -127,23 +142,21 @@ app.post('/checkLogin', async (req, res) => {
             console.error("Invalid token:", err);
         }
     }
-    console.log(req.body)
     if (!req.body.username || !req.body.password) {
         res.status(400).redirect('/login' + "?error=Username and password are required");
         return;
     }
     const user = await db.Users.findOne({ where: { username: req.body.username } });
     if (!user) {
-        res.status(404).send('User not found');
+        res.status(404).redirect('/login?error=User not found');
         return;
     }
     if (req.body.password && req.body.username) {
         const isPasswordValid = await bcrypt.compare(req.body.password, user.password);
         if (!isPasswordValid) {
-            res.status(401).send('Invalid password');
+            res.status(401).redirect('/login?error=Invalid password');
             return;
         } else {
-            console.log("giving token")
             const token = jsonWebToken.sign({ id: user.id }, config.verySecretSecret, { expiresIn: '168h' });
             
             // Set the token as a cookie instead of just in the response header
@@ -153,35 +166,33 @@ app.post('/checkLogin', async (req, res) => {
                 sameSite: 'strict'
             });
             
-            res.redirect('/');
+            res.status(302).redirect('/tricks');
             return;
         }
     }
 })
 
 app.get('/signup', (req, res) => {
-    res.render('signup')
+    res.status(200).render('signup')
 })
 
 app.get('/login', (req, res) => {
-    res.render('login', { error: req.query.error })
+    res.status(200).render('login', { error: req.query.error })
 })
 
 app.get('/logout', (req, res) => {
     res.clearCookie('token');
-    res.redirect('/login');
+    res.status(302).redirect('/login');
 })
 
 app.get('/friends', async (req, res) => {
-
-    res.render('friends', { friends: [] })
+    res.status(200).render('friends', { friends: [] })
 })
 
 app.post('/user', async (req, res) => {
     let pictureFileName;
     let formData = {};
     var fstream;
-
 
     req.pipe(req.busboy);
 
@@ -190,17 +201,16 @@ app.post('/user', async (req, res) => {
         const existingUser = await db.Users.findOne({ where: { username: formData.username.toLowerCase() } });
 
         if (existingUser) {
-            res.render('signup', { error: 'Error 400: User already exists' });
+            res.status(400).render('signup', { error: 'Error 400: User already exists' });
             return;
         }
 
         if (!formData.username || !formData.password) {
-            res.render('signup', { error: 'Error 400: Username and password are required' });
+            res.status(400).render('signup', { error: 'Error 400: Username and password are required' });
             return;
         }
 
     });
-
 
     req.busboy.on('file', function (fieldname, file, filename) {
         console.log("Uploading: " + filename);
@@ -216,11 +226,9 @@ app.post('/user', async (req, res) => {
         });
     });
 
-
     req.busboy.on('finish', async function () {
         const salt = await bcrypt.genSalt(10);
         const hashedPassword = await bcrypt.hash(formData.password, salt);
-
 
         const user = await db.Tricks.create({
             username: formData.username.toLowerCase(),
@@ -236,7 +244,7 @@ app.post('/user', async (req, res) => {
         user.profilePicture = [newFileName]
         console.log(user.images)
         await user.save()
-        res.redirect('/tricks');
+        res.status(302).redirect('/tricks');
     });
 
 })
@@ -246,72 +254,110 @@ app.get('/uploadedImages/:filename', (req, res) => {
     const filename = req.params.filename;
     const filePath = path.join(__dirname, 'uploadedImages', filename);
     if (!fs.existsSync(filePath)) {
-        res.sendFile(path.join(__dirname, 'pictures', '404_not_found.jpg'));
+        res.status(404).sendFile(path.join(__dirname, 'pictures', '404_not_found.jpg'));
         return;
     }
-    res.sendFile(filePath);
+    res.status(200).sendFile(filePath);
 });
 
 app.get('/pictures/:filename', (req, res) => {
     const filename = req.params.filename;
     const filePath = path.join(__dirname, 'pictures', filename);
     if (!fs.existsSync(filePath)) {
-        res.sendFile(path.join(__dirname, 'pictures', '404_not_found.jpg'));
+        res.status(404).sendFile(path.join(__dirname, 'pictures', '404_not_found.jpg'));
         return;
     }
-    res.sendFile(filePath);
+    res.status(200).sendFile(filePath);
 });
 
 app.get('/uploadedVideos/:filename', (req, res) => {
-    console.log("getting video: " + req.params.filename)
     const filename = req.params.filename;
     const filePath = path.join(__dirname, 'uploadedVideos', filename);
     if (!fs.existsSync(filePath)) {
         console.log("file not found: " + filePath)
-        res.sendFile(path.join(__dirname, 'pictures', '404_not_found.jpg'));
+        res.status(404).sendFile(path.join(__dirname, 'pictures', '404_not_found.jpg'));
         return;
     }
-    res.sendFile(filePath);
+    res.status(200).sendFile(filePath);
 });
-
 
 app.get('/video-thumbnail/:filename', async (req, res) => {
     const filepath = path.join(__dirname, 'uploadedImages', req.params.filename, "-thumbnail.png");
     if (!fs.existsSync(filepath)) {
-        res.sendFile(path.join(__dirname, 'pictures', '404_not_found.jpg'));
+        res.status(404).sendFile(path.join(__dirname, 'pictures', '404_not_found.jpg'));
         return;
     }
-    res.sendFile(filepath);
-            
+    res.status(200).sendFile(filepath);
 });
 
 app.get('/tricks', async (req, res) => {
-    const filter = req.query.filter;
-    if (filter) {
-        const tricks = await db.Tricks.findAll({ where: { tags: filter } });
-        // for (const trick in tricks) {
-        //     if (await trick.canView(getUserFromToken()))
-        //     {}
-        // }
-        const plainTricks = tricks.map(trick => trick.get({ plain: true })); // Convert to plain objects
-        res.render('tricks', { tricks: plainTricks });
-        return;
+    const query = req.query.search ? req.query.search.trim() : null;
+    const tagOnly = req.query.tagOnly ? req.query.tagOnly : false;
+    let tricks
+    const queryArray = query ? query.split(',').map(tag => tag.trim().toLowerCase()).filter(Boolean) : [];
+    if (query) {
+        if (tagOnly) {
+            // Support multiple tags separated by commas
+            tricks = await db.Tricks.findAll({
+                where: {
+                    [Op.and]: queryArray.map(tag =>
+                        db.sequelize.where(
+                            db.sequelize.fn('LOWER', db.sequelize.col('tags')),
+                            {
+                                [Op.like]: `%${tag}%`
+                            }
+                        )
+                    )
+                }
+            });
+        } else {
+             tricks = await db.Tricks.findAll({
+                where: {
+                    [Op.or]: [
+                        {
+                            [Op.and]: queryArray.map(tag =>
+                                db.sequelize.where(
+                                    db.sequelize.fn('LOWER', db.sequelize.col('tags')),
+                                    {
+                                        [Op.like]: `%${tag}%`
+                                    }
+                                )
+                            )
+                        },
+                        db.sequelize.where(
+                            db.sequelize.fn('LOWER', db.sequelize.col('sudoNames')),
+                            {
+                                [Op.like]: `%${query.trim().toLowerCase()}%`
+                            }
+                        ),
+                        {
+                            name: {
+                                [Op.like]: query.trim() + '%'
+                            }
+                        }
+                    ]
+                }
+            });
+        }
+    } else {
+        tricks = await db.Tricks.findAll();
     }
-    const tricks = await db.Tricks.findAll();
+        
     const plainTricks = tricks.map(trick => trick.get({ plain: true })); // Convert to plain objects
-    res.render('tricks', { tricks: plainTricks });
+    res.status(200).render('tricks', { tricks: plainTricks, query: query, queryArray: queryArray});
 });
 
 app.get('/trick/:id', async (req, res) => {
     if (!req.params.id) {
-        res.status(404).send('Trick not found. invalid query');
+        res.status(404).redirect('/tricks?error=Trick not found. invalid query');
         return;
     }
     const trick = await db.Tricks.findOne({
         where: { id: req.params.id },
         include: [
             { model: db.Tricks, as: 'FromTrick' },
-            { model: db.Tricks, as: 'ToTrick' }
+            { model: db.Tricks, as: 'ToTrick' },
+            { model: db.Users, as: 'owner' }
         ]
     });
     if (!trick) {
@@ -319,23 +365,23 @@ app.get('/trick/:id', async (req, res) => {
         return;
     }
 
+    console.log(trick.owner)
     const nextTricks = await db.Tricks.findAll({ where: { from: trick.ToTrick ? trick.ToTrick.id : trick.id } });
     const previousTricks = await db.Tricks.findAll({ where: { to: trick.FromTrick ? trick.FromTrick.id : trick.id } });
 
     const plainTrick = trick.get({ plain: true });
     plainTrick.nextTricks = nextTricks.map(trick => trick.get({ plain: true }));
     plainTrick.previousTricks = previousTricks.map(trick => trick.get({ plain: true }));
-    res.render('trick', { trick: plainTrick })
+    res.status(200).render('trick', { trick: plainTrick })
 })
 
-
 app.get('/create-Trick', async (req, res) => {
+    const from = req.query.from ? req.query.from : null;
     const tricks = (await db.Tricks.findAll()).map(trick => {
         return trick.get({ plain: true });
     });
-    const from = tricks.find(trick => trick.id == req.query.from);
-    const to = tricks.find(trick => trick.id == req.query.to);
-    res.render('createTrick', { tricks: tricks, from: from, to: to })
+    const fromTrick = tricks.find(t => t.id == from);
+    res.status(200).render('createTrick', { tricks: tricks, from: fromTrick })
 })
 
 app.post('/addTrick', async (req, res) => {
@@ -353,7 +399,6 @@ app.post('/addTrick', async (req, res) => {
     let fieldsComplete = 0
 
     // Add these debug statements
-    console.log("Starting /addTrick processing");
 
     req.pipe(req.busboy);
 
@@ -363,7 +408,6 @@ app.post('/addTrick', async (req, res) => {
     })
 
     req.busboy.on('field', function (fieldname, val) {
-        console.log("Fild received: " + fieldname + " = " + val);
         formData[fieldname] = val;
         fieldsComplete++
 
@@ -374,13 +418,12 @@ app.post('/addTrick', async (req, res) => {
 
     });
 
-    
     req.busboy.on('file', function (fieldname, file, fileInfo) {
         console.log(`File processing started for ${fieldname}`);
 
-
         if (!fileInfo || !fileInfo.filename) {
             console.log("No file info or filename provided for field: " + fieldname);
+            file.resume(); // Consume the file stream to avoid memory leaks
             filesComplete++;
             return;
         }
@@ -443,7 +486,7 @@ app.post('/addTrick', async (req, res) => {
                 console.log("Upload Finished of " + fileInfo.filename + " to " + path.join(uploadDir, videoFileNames[index]));
                 filesComplete++;
             });
-        } else if (fieldname == 'videoThumbnail') {
+        } else if (fieldname == 'videoThumbnail') { // depricated
             const index = videoThumbnailFileNames.length
             console.log("Uploading: " + fileInfo.filename);
             videoThumbnailFileNames[index] = "temp" + fileInfo.filename;
@@ -480,7 +523,6 @@ app.post('/addTrick', async (req, res) => {
 
     });
 
-
     req.busboy.on('finish', async function () {
         console.log("⭐ BUSBOY FINISH EVENT TRIGGERED ⭐");
         console.log(`Fields processed: ${fieldsComplete}, Files processed: ${filesComplete}`);
@@ -498,7 +540,10 @@ app.post('/addTrick', async (req, res) => {
 
             console.log("Creating trick with data:", {
                 name: formData.name,
+                owner: user.id,
                 difficulty: formData.difficulty,
+                sudonames: formData.sudoNames.split(",").map(n=>n.trim()).map(name => name.charAt(0).toUpperCase() + name.slice(1).toLowerCase()),
+                tags: formData.tags.split(",").map(t=>t.trim()).map(tag => tag.charAt(0).toUpperCase() + tag.slice(1).toLowerCase()),
                 to: formData.to,
                 from: formData.from,
                 imageCount: pictureFileNames.length,
@@ -509,13 +554,13 @@ app.post('/addTrick', async (req, res) => {
                 name: formData.name,
                 owner: user.id,
                 difficulty: formData.difficulty,
-                sudonames: formData.sudonames,
+                sudonames: formData.sudoNames.split(",").map(n=>n.trim()).map(name => name.charAt(0).toUpperCase() + name.slice(1).toLowerCase()),
                 description: formData.description,
-                tags: formData.tags,
+                tags: formData.tags.split(",").map(t=>t.trim()).map(tag => tag.charAt(0).toUpperCase() + tag.slice(1).toLowerCase()),
                 images: [],
-                videos: null,
-                to: formData.to === '{null}' ? null : (formData.to ? formData.to : null),
-                from: formData.from === '{null}' ? null : (formData.from ? formData.from : null)
+                videos: [],
+                to: formData.to == "{null}" ? null : (formData.to ? formData.to : null),
+                from: formData.from == "{null}" ? null : (formData.from ? formData.from : null)
             });
             console.log("created trick with ID: " + trick.id)
 
@@ -544,9 +589,10 @@ app.post('/addTrick', async (req, res) => {
                     }
                     renamedVideoNames.push(newFileName);
                 });
+                trick.videos = renamedVideoNames
             }
             await trick.save()
-            res.redirect('/trick/' + trick.id);
+            res.status(302).redirect('/trick/' + trick.id);
         } catch (error) {
             console.error("Error in busboy finish handler:", error);
             res.status(500).send('An error occurred while processing the request. ' + error.message);
@@ -559,16 +605,18 @@ app.delete('/deleteTrick/:trickId', async (req, res) => {
 
     const trickId = req.params.trickId;
     if (!trickId) {
-        res.status(400).send('Trick ID is required');
+        res.status(400).redirect(`/trick/${trickId}?error=Trick ID is required`);
         return;
     }
     const trick = await db.Tricks.findOne({ where: { id: trickId } });
     
     if (!trick) {
-        res.status(404).send('Trick not found');
+        res.status(404).redirect(`/trick/${trickId}?error=Trick not found`);
         return;
     }
     
+
+
     if (trick.images) {
         for (const image of trick.images) {
             const imagePath = path.join(__dirname, 'uploadedImages', image);
@@ -601,18 +649,115 @@ app.delete('/deleteTrick/:trickId', async (req, res) => {
         // Now delete the parent row
         await db.Tricks.destroy({ where: { id: trickId } });
 
-        res.status(200).send({ message: 'Trick deleted successfully' });
+        res.status(200).redirect('/tricks?success=Trick deleted successfully' );
     } catch (error) {
         console.error(error);
-        res.status(500).send({ error: 'Failed to delete trick' });
+        res.status(500).redirect(`/trick/${trickId}?error=Failed to delete trick` );
     }
 })
 
-app.get('/create-Transition', async (req, res) => {
+app.get('/editTrick/:id', async (req, res) => {
     const tricks = (await db.Tricks.findAll()).map(trick => {
         return trick.get({ plain: true });
     });
-    res.render('createTransition', { tricks: tricks, trick: req.query.trick })
+
+    const trick = await db.Tricks.findOne({
+        where: { id: req.params.id },
+        include: [
+            { model: db.Tricks, as: 'FromTrick' },
+            { model: db.Tricks, as: 'ToTrick' }
+        ]
+    });
+    if (!trick) {
+        res.status(404).send('Trick not found');
+        return;
+    }
+
+    const nextTricks = tricks.filter(t => t.from == trick.id);
+    const previousTricks = tricks.filter(t => t.to == trick.id);
+
+    const plainTrick = trick.get({ plain: true });
+    plainTrick.nextTricks = nextTricks.map(trick => trick.get({ plain: true }));
+    plainTrick.previousTricks = previousTricks.map(trick => trick.get({ plain: true }));
+    res.status(200).render('editTrick', { trick: plainTrick, tricks: tricks})
+})
+
+// HTML form dont support PUT method, so we use POST and specify the method in a hidden field
+app.put('/updateTrick/:trickId', async (req, res) => {
+    const user = await getUserFromToken(req)
+
+    if (user == null) {
+        res.status(401).send('Unauthorized');
+        return;
+    }
+
+    const trickId = req.params.trickId;
+    if (!trickId) {
+        res.status(400).send('Trick ID is required');
+        return;
+    }
+    const trick = await db.Tricks.findOne({ where: { id: trickId } });
+    
+    if (!trick) {
+        res.status(404).send('Trick not found');
+        return;
+    }
+
+    if (trick.owner != user.id && user.role != "admin" && trick.edit_perms != "public") {
+        if (trick.edit_perms != "friends") {
+            res.status(403).send('You are not allowed to edit this trick');
+            return;
+        } else {
+            const owner = await db.Users.findOne({ where: { id: trick.owner } });
+            if (owner) {
+                const isFriend = await db.Friends.findOne({ 
+                    where: { 
+                    userId: user.id, 
+                    friendId: trick.owner 
+                    } 
+                });
+                if (!isFriend) {
+                    res.status(403).send('You are not allowed to edit this trick');
+                    return;
+                }
+            }
+        }
+    }
+    let formData = {};
+    
+    req.pipe(req.busboy);
+    
+    req.busboy.on('field', function (fieldname, val) {
+        console.log("Field received:", fieldname, val);
+        formData[fieldname] = val;
+    });
+    
+    req.busboy.on('file', function (fieldname, file, fileInfo) {
+        // Handle file uploads if needed
+        console.log(`File received: ${fieldname}`);
+        file.resume(); // Skip files for now, just consume the stream
+    });
+    
+    req.busboy.on('finish', async function () {
+        try {
+            console.log("Busboy finished, formData:", formData);
+            
+            await trick.update({
+                name: formData.name,
+                difficulty: parseInt(formData.difficulty),
+                sudoNames: formData.sudoNames.split(",").map(n=>n.trim()).map(name => name.charAt(0).toUpperCase() + name.slice(1).toLowerCase()),
+                description: formData.description,
+                tags: formData.tags.split(",").map(t=>t.trim()).map(tag => tag.charAt(0).toUpperCase() + tag.slice(1).toLowerCase()),
+                to: formData.to === "{null}" ? null : (formData.to),
+                from: formData.from === "{null}" ? null : (formData.from)
+            });
+            
+            res.status(302).redirect(`/trick/${trickId}`);
+        } catch (error) {
+            console.error("Error updating trick:", error);
+            res.status(500).send({ error: 'Failed to update trick' });
+        }
+    });
 })
 
 app.listen(port, () => {

@@ -5,7 +5,7 @@ module.exports = (sequelize, DataTypes) => {
             primaryKey: true,
             autoIncrement: true,
         },
-        owner: {
+        ownerId: {
             type: DataTypes.INTEGER,
             references: {
                 model: 'users',
@@ -118,7 +118,7 @@ module.exports = (sequelize, DataTypes) => {
     Trick.associate = (models) => {
         Trick.belongsTo(models.tricks, { as: 'FromTrick', foreignKey: 'from' });
         Trick.belongsTo(models.tricks, { as: 'ToTrick', foreignKey: 'to' });
-        Trick.belongsTo(models.Users, { foreignKey: 'owner' });
+        Trick.belongsTo(models.Users, { as: "owner", foreignKey: 'ownerId' });
         Trick.belongsToMany(models.Users, {
           through: 'tricks_granted_users',
           foreignKey: 'trick_id',

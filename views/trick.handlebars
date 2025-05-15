@@ -28,18 +28,31 @@
 		{{/if}}
 	</div>
 	<aside class="md:w-1/2 md:pl-8">
+		{{#if trick.owner}}
+			{{#if trick.owner.profilePicture}}
+				<p class="mb-2 flex items-center">
+					<strong>Created by:</strong>
+					<img src="/uploadedImages/{{trick.owner.profilePicture}}" class="w-10 h-10 object-cover rounded-full ml-2 mr-2" alt="{{trick.owner.username}}'s profile picture">
+					{{trick.owner.username}}
+				</p>
+			{{else}}
+				<p class="mb-2"><strong>Created by:</strong> {{trick.owner.username}}</p>
+			{{/if}}
+		{{else}}
+			<p class="mb-2"><strong>Created by:</strong> No one</p>
+		{{/if}}
 		<p class="mb-2"><strong>Description:</strong> {{trick.description}}</p>
 		<p class="mb-2"><strong>Difficulty:</strong> {{trick.difficulty}}</p>
 		<p class="mb-2"><strong>Tags:</strong> {{trick.tags}}</p>
-		<p class="mb-2"><strong>Other names:</strong> {{trick.sudonames}}</p>
+		<p class="mb-2"><strong>Other names:</strong> {{trick.sudoNames}}</p>
 		{{#if trick.ToTrick}}
 			<div>
 				<p>to:</p>
 				<a href="/trick/{{trick.ToTrick.id}}" class="flex items-center">
 				{{#if trick.ToTrick.images.length}}
-					<img src="/uploadedImages/{{first trick.ToTrick.images}}" alt={{trick.ToTrick.name}} class="w-12 h-12 rounded-full">
+					<img src="/uploadedImages/{{first trick.ToTrick.images}}" alt={{trick.ToTrick.name}} class="w-32 h-32 rounded">
 				{{else}}
-					<img src="/video-thumbnail/{{first trick.ToTrick.videos}}" alt={{trick.ToTrick.name}} class="w-12 h-12 rounded-full">
+					<img src="/video-thumbnail/{{first trick.ToTrick.videos}}" alt={{trick.ToTrick.name}} class="w-32 h-32 rounded">
 				{{/if}}
 				{{trick.ToTrick.name}}
 				</a>
@@ -50,9 +63,9 @@
 				<p>from:</p>
 				<a href="/trick/{{trick.FromTrick.id}}" class="flex items-center">
 				{{#if trick.FromTrick.images.length}}
-					<img src="/uploadedImages/{{first trick.FromTrick.images}}" alt={{trick.FromTrick.name}} class="w-12 h-12 rounded-full">
+					<img src="/uploadedImages/{{first trick.FromTrick.images}}" alt={{trick.FromTrick.name}} class="w-24 h-24 rounded">
 				{{else}}
-					<img src="/video-thumbnail/{{first trick.FromTrick.videos}}" alt={{trick.FromTrick.name}} class="w-12 h-12 rounded-full">
+					<img src="/video-thumbnail/{{first trick.FromTrick.videos}}" alt={{trick.FromTrick.name}} class="w-32 h-32 rounded">
 				{{/if}}
 				{{trick.fromTrick.name}}
 				</a>
@@ -60,8 +73,8 @@
 		{{/if}}
 	</aside>
 </div>
-<a href="/create-transition/?trick={{trick.id}}" class="mt-4 bg-green-500 hover:bg-green-700 text-white font-bold py-2 px-4 rounded">Add Transition</a>
-<a href="/edit-trick/?trick={{trick.id}}" class="mt-4 bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded">Edit trick</a>
+<a href="/create-trick/?from={{trick.id}}" class="mt-4 bg-green-500 hover:bg-green-700 text-white font-bold py-2 px-4 rounded">Add Transition</a>
+<a href="/editTrick/{{trick.id}}" class="mt-4 bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded">Edit trick</a>
 <button onclick="deleteTrick('{{trick.id}}')" class="mt-4 bg-red-500 hover:bg-red-700 text-white font-bold py-2 px-4 rounded">Delete trick</button>
 
 <p>Where to go next:</p>
@@ -115,7 +128,6 @@
 		mainVideo.classList.add('hidden');
 	}
 
-	console.log("hii")
 
 	const setContent = async (index, type) => {
 		const mainPicture = document.getElementById('mainPicture');
@@ -138,11 +150,9 @@
 	};
 
 	const deleteTrick = async (trickid) => {
-		console.log(trickid)
 		if (!confirm('Are you sure you want to delete this trick?') == true) {
 			return;
 		}
-		console.log('hi')
 		const response = await fetch(`/deleteTrick/` + trickid, {
 			method: 'DELETE',
 		});

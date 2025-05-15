@@ -1,0 +1,5 @@
+- fix /updateTrick DONE
+- add support for serching in /Tricks DONE
+- make the tags in /tricks clickable to search for that tag DONE
+- verify that uploading videos works DONE
+- make it so that when you press a tag it only querys for that tag and does not find tricks with the name

@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Document</title>
+    <title>Circus Database</title>
     <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
 </head>
 <body class="flex flex-col min-h-screen">
@@ -63,8 +63,6 @@
                 menu.style.position = 'absolute';
                 menu.style.top = `${menuPosition.y}px`;
                 menu.style.left = `${menuPosition.x}px`;
-                console.log(menuPosition.x, menuPosition.y);
-                console.log(headerBox.x, headerBox.y);
                 menu.animate([
                     { transform: 'translateX(0)' },
                     { transform: `translateX(${headerBox.width - menuBox.x}px)` }
@@ -91,16 +89,12 @@
                     easing: 'ease-in-out',
                     fill: 'forwards'
                 });
-                // animate the hamburger icon
-                
             }
             
             menuToggle.style.position = 'absolute';
             const newMenuToggleBox = menuToggle.getBoundingClientRect();
             const newMenuTogglePosition = {x: newMenuToggleBox.x, y: newMenuToggleBox.y };
             
-            console.log(menuTogglePosition.x, menuTogglePosition.y);
-            console.log(newMenuTogglePosition.x, newMenuTogglePosition.y);
             menuToggle.animate([
                 { transform: `translateX(${menuTogglePosition.x - newMenuTogglePosition.x + menuToggleBox.width /2}px) translateY(${ menuTogglePosition.y - newMenuTogglePosition.y + menuToggleBox.width /2}px)` },
                 { transform: `translateX(0) translateY(0)` }
@@ -114,7 +108,7 @@
             header.style.overflow = 'hidden';
             if (menu.classList.contains('hidden')) { // Animate when menu closes
                 header.animate([
-                    { maxHeight: "10px" }, // Replace 500px with the maximum expected height
+                    { maxHeight: "10px" }, 
                     { maxHeight: headerHeight + "px" }
                 ], {
                     duration: 2000,
@@ -124,7 +118,7 @@
             } else { // Animate when menu opens
                 header.animate([
                     { maxHeight: headerHeight + "px" },
-                    { maxHeight: "500px" } // Replace 500px with the maximum expected height
+                    { maxHeight: "500px" } 
                 ], {
                     duration: 2000,
                     easing: 'ease-in-out',
