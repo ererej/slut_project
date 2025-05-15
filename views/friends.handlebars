@@ -1,5 +1,9 @@
+{{!-- det går inte att lägga till vänner.... --}}
 {{#each friends}}
-  <div class="friend">
+  <div class="flex">
+    {{#if profilePicture}}
+      <img src="{{profilePicture}}" alt="{{name}}'s profile picture" class="profile-picture" />
+    {{/if}}
     <h2>{{name}}</h2>
   </div>
 {{/each}}

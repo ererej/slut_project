@@ -307,7 +307,6 @@ app.get('/tricks', async (req, res) => {
     const queryArray = query ? query.split(',').map(tag => tag.trim().toLowerCase()).filter(Boolean) : [];
     if (query) {
         if (tagOnly) {
-            // Support multiple tags separated by commas
             tricks = await db.Tricks.findAll({
                 where: {
                     [Op.and]: queryArray.map(tag =>
@@ -320,6 +319,14 @@ app.get('/tricks', async (req, res) => {
                     )
                 }
             });
+            tricks = tricks.filter(trick => 
+                queryArray.every(tag => 
+                    trick.tags &&
+                    trick.tags
+                        .map(t => t.trim().toLowerCase())
+                        .includes(tag)
+                )
+            );
         } else {
              tricks = await db.Tricks.findAll({
                 where: {
@@ -358,6 +365,8 @@ app.get('/tricks', async (req, res) => {
 });
 
 app.get('/trick/:id', async (req, res) => {
+    const user = await getUserFromToken(req)
+    console.log(user)
     if (!req.params.id) {
         res.status(404).redirect('/tricks?error=Trick not found. invalid query');
         return;
@@ -550,7 +559,7 @@ app.post('/addTrick', async (req, res) => {
 
             console.log("Creating trick with data:", {
                 name: formData.name,
-                owner: user.id,
+                ownerId: user.id,
                 difficulty: formData.difficulty,
                 sudonames: formData.sudoNames.split(",").map(n=>n.trim()).map(name => name.charAt(0).toUpperCase() + name.slice(1).toLowerCase()),
                 tags: formData.tags.split(",").map(t=>t.trim()).map(tag => tag.charAt(0).toUpperCase() + tag.slice(1).toLowerCase()),
@@ -562,7 +571,7 @@ app.post('/addTrick', async (req, res) => {
 
             const trick = await db.Tricks.create({
                 name: formData.name,
-                owner: user.id,
+                ownerId: user.id,
                 difficulty: formData.difficulty,
                 sudonames: formData.sudoNames.split(",").map(n=>n.trim()).map(name => name.charAt(0).toUpperCase() + name.slice(1).toLowerCase()),
                 description: formData.description,
@@ -625,7 +634,11 @@ app.get('/deleteTrick/:trickId', async (req, res) => {
         res.status(404).redirect(`/trick/${trickId}?error=Trick not found`);
         return;
     }
-    
+    const user = await getUserFromToken(req)
+    if (trick.ownerId != user.id && user.role != "admin") {
+        res.status(403).redirect(`/trick/${trickId}?error=You are not allowed to delete this trick`);
+        return;
+    }
 
 
     if (trick.images) {
@@ -714,17 +727,17 @@ app.put('/updateTrick/:trickId', async (req, res) => {
         return;
     }
 
-    if (trick.owner != user.id && user.role != "admin" && trick.edit_perms != "public") {
+    if (trick.ownerId != user.id && user.role != "admin" && trick.edit_perms != "public") {
         if (trick.edit_perms != "friends") {
             res.status(403).send('You are not allowed to edit this trick');
             return;
         } else {
-            const owner = await db.Users.findOne({ where: { id: trick.owner } });
+            const owner = await db.Users.findOne({ where: { id: trick.ownerId } });
             if (owner) {
                 const isFriend = await db.Friends.findOne({ 
                     where: { 
                     userId: user.id, 
-                    friendId: trick.owner 
+                    friendId: trick.ownerId 
                     } 
                 });
                 if (!isFriend) {
